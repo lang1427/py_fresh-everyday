@@ -233,3 +233,9 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 ```
+
+## 项目起步
+
+### 前提
+1. 安装Django `pip install django`    4.0.4
+2. 安装pymysql `pip install pymysql`   1.0.2
