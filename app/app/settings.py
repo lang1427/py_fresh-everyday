@@ -37,6 +37,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'tinymce', # 富文本编辑器
+    # 注册应用模块
+    'user',
+    'goods',
+    'cart',
+    'order'
 ]
 
 MIDDLEWARE = [
@@ -75,10 +81,20 @@ WSGI_APPLICATION = 'app.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'fresh_everyday',
+        'HOST':'127.0.0.1',
+        'PORT':'5690',
+        'USER':'root',
+        'PASSWORD':'king+5688',
+        'OPTIONS': {
+            "init_command": "SET foreign_key_checks = 0;" # 关闭外键约束
+        }
     }
 }
+
+# Django认证系统使用的模型类  SystemCheckError: System check identified some issues
+AUTH_USER_MODEL = 'user.User' # python manage.py createsuper
 
 
 # Password validation
@@ -121,3 +137,10 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# 富文本编辑器配置
+TINYMCE_DEFAULT_CONFIG = {
+    'theme' : 'advanced',
+    'width' : 600,
+    'height': 400
+}

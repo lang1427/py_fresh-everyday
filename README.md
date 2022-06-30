@@ -74,7 +74,7 @@
 | \\\       | 用户id |
 
 
-### 商品SKU表
+### 商品SKU表 (库存量单位,主要是用来定价和管理库存,即库存进出计量的单位,可以是以件、盒、托盘等为单位。)
 
 |  转义字符  |  描述  |
 |:--:       |:--:    |
@@ -91,7 +91,7 @@
 | \\\       | spu ID |
 
 
-### 商品SPU表
+### 商品SPU表 (标准化产品单元,是商品信息聚合的最小单位,是一组可复用、易检索的标准化信息的集合,该集合描述了商品的特性)
 
 |  转义字符  |  描述  |
 |:--:       |:--:    |
@@ -134,6 +134,7 @@
 |  转义字符  |  描述  |
 |:--:       |:--:    |
 | \\'       | ID |
+| \\'       | 活动名称 |
 | \\'       | 活动url |
 | \\\       | 图片 |
 | \\\       | index |
@@ -166,6 +167,7 @@
 | \\'       | 运费 |
 | \\\       | 支付状态 |
 | \\\       | 创建时间 |
+| \\\       | 支付编号 |
 
 
 ### 订单商品表
@@ -239,3 +241,33 @@ class BaseModel(models.Model):
 ### 前提
 1. 安装Django `pip install django`    4.0.4
 2. 安装pymysql `pip install pymysql`   1.0.2
+
+
+
+### 问题记录
+
+#### 执行迁移
+
+1. 使用**django-tinymce2.6**的版本中出现错误： `ImportError: cannot import name 'force_text' from 'django.utils.encoding'`
+    - django4.0 移除了 `django.utils.encoding.force_text() and smart_text() are removed.`
+    - 解决方式：更新**django-tinymce**版本  `pip install --upgrade django-tinymce`  当前使用版本：3.4.0
+2. `ValueError: Invalid model reference 'app.user.Address'. String model references must be of the form 'app_label.ModelName'.`
+    - 在其他模型类导入用户类时不需要**包名.模块名.类名(app.user.Address)**,只需要**模块名.类名(user.Address)**即可
+3. ` Cannot use ImageField because Pillow is not installed.`
+    - 解决方式： `python -m pip install Pillow`
+4. `AttributeError: 'tuple' object has no attribute 'startswith'`
+    - 解决方式：通过一个内嵌类 “class Meta” 给你的 model 定义元数据时不需要加逗号
+5. `django.db.utils.OperationalError: (1050, "Table 'f_goods_spu' already exists")`
+    - 操作goods应用时，f_goods_spu表已经被创建，需要同步数据库表：`python manage.py migrate goods（对应的应用名称） --fake`
+6. 外键约束：`django.db.utils.IntegrityError: (1215, 'Cannot add foreign key constraint')`
+    ```python
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            ...
+            'OPTIONS': {
+                "init_command": "SET foreign_key_checks = 0;" # 关闭外键约束
+            }
+        }
+    }
+    ```
