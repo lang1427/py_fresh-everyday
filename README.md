@@ -207,7 +207,92 @@
             url(r'^tinymce/',include('tinymce.urls'))
         ]
         ```
+
+- itsdangerous 加密模块
+    ```python
+    from itsdangerous import URLSafeSerializer
+    auth_s = URLSafeSerializer("secret key", "auth")
+    token = auth_s.dumps({"id": 5, "name": "itsdangerous"}) # 加密
+
+    print(token)
+    # eyJpZCI6NSwibmFtZSI6Iml0c2Rhbmdlcm91cyJ9.6YP6T0BaO67XP--9UzTrmurXSmg
+
+    data = auth_s.loads(token) # 解密  byte格式转utf8: .decode()
+    print(data["name"])
+    # itsdangerous
+    ```
+
+- django内置函数发送邮件
+    ```python
+    from django.core.mail import send_mail
+
+    send_mail('发送标题','发送正文','发送者','接收者列表',html_message='发送正文（HTML格式）')
+    ```
+
+    ```python
+    # settings.py 发送邮箱的配置
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' 
+    EMAIL_HOST = 'smtp.qq.com' # smtp服务地址
+    EMAIL_PORT = 587 # smtp服务端口
+    EMAIL_HOST_USER = 'xxx@qq.com' #发送者邮箱
+    EMAIL_HOST_PASSWORD = '' # 授权码
+    ```
+
+- celery 异步任务
+    - 适用于异步处理问题，当发送邮件、或者上传文件，图像处理等一些比较耗时的操作，我们可将其异步执行，这样用户就不需要等待很久
+    - 简单，易于使用和维护，有丰富的文档；高效，单个celery进程每分钟可以处理百万个任务；灵活，celery中几乎每个部分都可以自定义扩展
+    1. 安装celery `pip install celery`
+    ```python
+    # celery_tasks/tasks.py
+    from celery import Celery
+    # 创建一个Celery类的实例对象
+    app = Celery('名称，随意命名',broker='要连接的中间人即：redis或amqp')
+    # 定义任务函数
+    @app.task
+    def send(arg):
+        pass
+
+    # 别处任务处理者调用
+    send.delay(arg)
+    ```
+    2. django环境的初始化
+    ```python
+    import os
+    import django
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'app.settings')
+    django.setup()
+    ```
+    3. 启动celery命名：`celery -A celery_tasks/tasks.py worker -l info` celery_tasks/tasks.py:文件名
+
+- [Django验证系统](https://docs.djangoproject.com/zh-hans/4.0/topics/auth/default/)
+    - create_user ：创建用户
+    - authenticate ：验证用户
+    - login ：用户登录
+
+
+- SESSION_ENGINE: [session存储方式](https://docs.djangoproject.com/zh-hans/4.0/ref/settings/)
+- 配置redis作为Django缓存和session存储后端
+    - 安装：django-redis `pip install django-redis`
+    - 配置缓存
+    ```python
+    # settings.py
     
+    # django的缓存配置
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": "redis://127.0.0.1:6379/1",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            }
+        }
+    }
+    # 配置session存储
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+    SESSION_CACHE_ALIAS = "default" 
+    ```
+
+
 ```python
 from tinymce.models import HTMLField
 class GoodsTest(models.Model):
@@ -241,6 +326,11 @@ class BaseModel(models.Model):
 ### 前提
 1. 安装Django `pip install django`    4.0.4
 2. 安装pymysql `pip install pymysql`   1.0.2
+3. 安装django-tinymce 富文本编辑器  `pip install django-tinymce`  3.4.0
+4. 安装itsdangerous 加密模块 `pip install itsdangerous` 2.1.2
+5. 安装celery 异步任务 `pip install -U Celery`  5.2.7
+6. 安装redis `pip install reids` 4.3.4
+7. 安装django-redis `pip install django-redis` 5.2.0
 
 
 
