@@ -183,6 +183,14 @@
 
 
 ### redis 保存用户历史浏览记录
+1. 什么时候需要添加历史浏览记录？  
+    *访问商品详情页面的时候（在商品详情对应的视图中），需要添加历史浏览记录*
+2. 什么时候需要获取历史浏览记录
+    *访问用户个人信息的时候获取历史浏览记录*
+3. redis中存储历史记录的格式？
+    *每个用户的历史浏览记录都用一条数据保存，用List类型*
+    用户id:[商品信息id,...]
+    添加历史浏览记录时，用户最新浏览的商品的id从列表左侧插入
 
 
 ## 知识点
@@ -268,6 +276,7 @@
     - create_user ：创建用户
     - authenticate ：验证用户
     - login ：用户登录
+    - logout : 用户登出
 
 
 - SESSION_ENGINE: [session存储方式](https://docs.djangoproject.com/zh-hans/4.0/ref/settings/)
@@ -291,7 +300,18 @@
     SESSION_ENGINE = "django.contrib.sessions.backends.cache"
     SESSION_CACHE_ALIAS = "default" 
     ```
+    - 连接客户端
+    ```python
+    from django_redis import get_redis_connection
+    con = get_redis_connection("default") # 这里的default就是settings.py配置文件中配置的default
+    con.lrange() # 左侧插入列表数据
+    ```
 
+- 登录装饰器  [login_required](https://docs.djangoproject.com/zh-hans/4.0/topics/auth/default/#the-login-required-decorator)
+
+- `request.user` 任何一个请求过来，request都会生成用户信息user，如果未登录则是`AnonymousUser`类的实例；如果已登录则是`AUTH_USER_MODEL`类的实例，可以通过`is_authenticated`来区分
+
+- **除了给模板文件传递的模板变量之外，django框架会把request.user也传给模板文件，在模板文件中可通过user即可等同于视图类中的request.user**
 
 ```python
 from tinymce.models import HTMLField
