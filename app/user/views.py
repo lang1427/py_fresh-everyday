@@ -1,9 +1,10 @@
+from email.policy import default
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views import View
-from django.contrib.auth import authenticate,login
-from user.models import User
+from django.contrib.auth import authenticate,login,logout
+from user.models import Address, User
 from itsdangerous import URLSafeSerializer
 from django.conf import settings
 from celery_tasks.tasks import send_email_task
@@ -88,6 +89,12 @@ class LoginView(View):
         else:
             return render(request,'login.html',{'errmsg':'用户名或密码错误'})
 
+class LogoutView(View):
+
+    def get(self,request):
+        logout(request)
+        return redirect(reverse('users:login'))
+
 class UserInfoView(LoginRequiredMixin,View):
 
     def get(self,request):
@@ -110,7 +117,37 @@ class UserSiteView(LoginRequiredMixin,View):
         data = {
             "cur_page":"site"
         }
+        addr = Address.objects.getDefaultAddress(request.user)
+        if addr:
+            data['addr_str'] = "%s （%s 收） %s" % (addr.addr,addr.receiver,addr.phone)
         return render(request,'user_center_site.html',data)
 
+    def post(self,request):
+        data = {
+            "cur_page":"site"
+        }
+        user = request.user
+        
+        receiver = request.POST.get('receiver')
+        addr = request.POST.get('addr')
+        zip_code = request.POST.get('zip_code')
+        phone = request.POST.get('phone')
 
+        if not all([receiver,addr,phone]):
+            data["errmsg"] = "参数错误-收件人、详细地址、手机号不能为空"
+            return render(request,'user_center_site.html',data)
+        if not re.match(r'^1[0-9]{10}$',phone):
+            data['errmsg'] = "手机号填写错误"
+            return render(request,'user_center_site.html',data)
+
+        # 如果改用户当前没有默认地址，则新添加的地址为默认地址
+        default_addr = Address.objects.getDefaultAddress(user)
+        if default_addr:
+            is_default = False
+        else:
+            is_default = True
+        
+        Address.objects.create(user=user,receiver=receiver,addr=addr,zip_code=zip_code,phone=phone,is_default=is_default)
+
+        return redirect(reverse('users:user_site'))
 

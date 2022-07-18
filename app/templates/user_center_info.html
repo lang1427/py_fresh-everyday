@@ -5,9 +5,9 @@
 <div class="info_con clearfix">
 	<h3 class="common_title2">基本信息</h3>
 	<ul class="user_info_list">
-		<li><span>用户名：</span>18210569700</li>
-		<li><span>联系方式：</span>18210569700</li>
-		<li><span>联系地址：</span>北京市昌平区</li>
+		<li><span>用户名：</span>{{ user.username }}</li>
+		<li><span>加入日期：</span>{{ user.create_time | date:"Y-m-d" }}</li>
+		<li><span>邮箱地址：</span>{{ user.email }}</li>
 	</ul>
 </div>
 
