@@ -341,6 +341,32 @@ class BaseModel(models.Model):
         abstract = True
 ```
 
+### 分布式图片服务器 FastDFS
+
+1. 什么是 FastDFS ?
+   - FastDFS是用c语言编写的一款开源的分布式文件系统，充分考虑了冗余备份、负载均衡、线性扩容等机制，使用fastdfs很容易搭建一套高性能的文件服务器集群提供文件上传、下载等服务
+   - FastDFS 架构包括`Tracker server` 和 `Storage server`。客户端请求 Tracker server进行文件上传、下载，通过 Tracker server调度最终由 Storage server完成文件上传和下载
+   - Tracker server作用是负载均衡和调度，通过Tracker server在文件上传时可以根据一些 策略找到 Storage server提供文件上传服务。可以将**tracker称为追踪服务器或调度服务器**
+   - Storage server作用是文件存储，客户端上传的文件最终存储在Storage服务器上，Storage server没有实现自己的文件系统而是利用操作系统的文件系统来管理文件，可以将**storage称为存储服务器**
+2. 海量存储，存储容量扩展方便，文件内容重复
+3. 使用python和FastDFS交互 [fdfs_client](https://pypi.org/project/fdfs_client)
+
+    1. 安装：`pip install fdfs_client==4.0.7`
+    2.  ```python
+        from fdfs_client.client import *
+        client = Fdfs_client('/etc/fdfs/client.conf')
+        ret = client.upload_by_filename('test')
+        # ret
+        {'Group name':'group1','Status':'Upload successed.', 'Remote file_id':'group1/M00/00/00/wKjzh0_xaR63RExnAAAaDqbNk5E1398.py','Uploaded size':'6.0KB','Local file name':'test'
+        , 'Storage IP':'192.168.243.133'}
+        ```
+4. 项目上传图片和使用图片的流程：修改django的上传行为（非MEDIA_ROOT）
+    - [django文件存储API](https://docs.djangoproject.com/zh-hans/4.0/ref/files/storage/)
+        - 默认上传文件时，使用的是`FileSystemStorage`类上传的文件，save()方法进行保存
+        - 不能修改源码，可通过`FileSystemStorage`类的父类`Storage`类，继承该父类，修改其存储方法
+        - 设置修改默认的文件存储类 settings.py中的`DEFAULT_FILE_STORAGE`
+
+
 ## 项目起步
 
 ### 前提
