@@ -366,6 +366,10 @@ class BaseModel(models.Model):
         - 不能修改源码，可通过`FileSystemStorage`类的父类`Storage`类，继承该父类，修改其存储方法
         - 设置修改默认的文件存储类 settings.py中的`DEFAULT_FILE_STORAGE`
 
+5. <font color="red">python3.x需要使用py3Fdfs</font> 
+    - 安装 `pip install py3Fdfs==2.1.0`
+    - 如果已安装`fdfs_client`，需要先对其卸载掉；再安装`py3Fdfs`
+    - [避坑](https://www.cnblogs.com/jrri/p/11570089.html)  `py3Fdfs`官方文档有问题
 
 ## 项目起步
 
