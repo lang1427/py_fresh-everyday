@@ -131,7 +131,7 @@ html,body{height:100%}
 .goods_banner{width:200px;height:300px;}
 .goods_banner img{width:200px;height:300px;}
 
-.goods_list{width:1000px;height:299px;border-bottom:1px solid #ededed}
+.goods_list{width:1000px;height:299px;border-bottom:1px solid #ededed;overflow: hidden;}
 .goods_list li{height:299px;width:249px;border-right:1px solid #ededed;float:left}
 .goods_list li:hover{width:248px;height:297px;border:1px solid gold;}
 .goods_list li:hover img{opacity:0.8}

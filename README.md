@@ -341,6 +341,32 @@ class BaseModel(models.Model):
         abstract = True
 ```
 
+### 页面静态化  （首页）
+1. 通过celery异步生成静态文件
+2. 如果celery服务和django服务不在同一台机器上，通过配置nginx访问该静态文件
+3. 后台admin管理更新首页数据表时，通过celery发送指令，重新生成index静态页面
+    - `ModelAdmin`方法 [admin管理站点](https://docs.djangoproject.com/zh-hans/4.0/ref/contrib/admin/#modeladmin-methods)
+        - `save_model()` 方法：后台管理新增或更新表中的数据时调用
+        - `delete_model()` 方法：后台管理删除表中的数据时调用
+
+### 页面数据的缓存
+[CACHES](https://docs.djangoproject.com/zh-hans/4.0/topics/cache/)
+**settings.py 中的 CACHES 配置项**
+1. 设置缓存 （Memcached，Redis，数据库缓存，文件系统缓存，本地内存缓存）
+2. 缓存方式
+    - 站点缓存 (缓存整个站点)
+    - 视图缓存 (缓存视图结果)
+    - 模板片段缓存 (缓存片段内容)
+    - 底层缓存API (缓存任何可以安全的 pickle 的 Python 对象)
+3. 当后台管理修改首页信息数据的时候，需要更新首页的缓存数据
+```python
+from django.core.cache import cache
+
+cache.set('my_key', 'hello, world!', 30)
+cache.get('my_key')
+cache.delete('my_key')
+```
+
 ### 分布式图片服务器 FastDFS
 
 1. 什么是 FastDFS ?
@@ -370,6 +396,8 @@ class BaseModel(models.Model):
     - 安装 `pip install py3Fdfs==2.1.0`
     - 如果已安装`fdfs_client`，需要先对其卸载掉；再安装`py3Fdfs`
     - [避坑](https://www.cnblogs.com/jrri/p/11570089.html)  `py3Fdfs`官方文档有问题
+
+6. 静态模板使用时 需要 类模型属性.url `<img src="{{ banner.image.url }}">`   轮播图图片
 
 ## 项目起步
 

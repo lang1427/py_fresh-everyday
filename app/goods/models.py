@@ -50,6 +50,9 @@ class GoodsSKU(BaseModel):
         verbose_name = '商品SKU'
         verbose_name_plural = verbose_name
 
+    def __str__(self):
+        return self.name
+
 
 class GoodsImage(BaseModel):
 
