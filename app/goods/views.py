@@ -6,6 +6,11 @@ from goods.models import GoodsType, IndexCreatoryGoods,IndexGoodsBanner, IndexPr
 class IndexGoodView(View):
 
     def get(self,request):
+        '''
+            如果用户未登录，则返回生成的静态首页页面；
+        '''
+        if not request.user.is_authenticated:
+            return render(request,'static_index.html')
         # 获取所有的商品种类信息
         types = GoodsType.objects.all()
         # 获取轮播图数据

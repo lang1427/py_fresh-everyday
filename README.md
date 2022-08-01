@@ -270,7 +270,7 @@
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'app.settings')
     django.setup()
     ```
-    3. 启动celery命名：`celery -A celery_tasks/tasks.py worker -l info` celery_tasks/tasks.py:文件名
+    3. 启动celery命名：`celery -A celery_tasks.tasks worker -l info`   celery_tasks.tasks ==> 目录.文件
 
 - [Django验证系统](https://docs.djangoproject.com/zh-hans/4.0/topics/auth/default/)
     - create_user ：创建用户
@@ -439,3 +439,8 @@ cache.delete('my_key')
         }
     }
     ```
+
+#### 开发过程中遇到的bug
+
+1. 写入文件数据时出现： `UnicodeEncodeError: 'gbk' codec can't encode character '\xa5' in position 4107: illegal multibyte sequence`
+    - 解决方式：`celery_tasks/tasks.py`文件中写入文件数据 open方法添加参数`encoding='utf-8'`
