@@ -10,46 +10,9 @@
 {% endblock toplink %}
 
 {% block content %}
-	<div class="header_con">
-		<div class="header">
-			<div class="welcome fl">欢迎来到天天生鲜!</div>
-			<div class="fr">
-				{% if user.is_authenticated %}
-				<div class="login_btn fl">
-					欢迎您：<em>{{ user.username }}</em>
-					<span>|</span>
-					<a href="{% url 'users:logout' %}">登出</a>
-				</div>
-				{% else %}
-				<div class="login_btn fl">
-					<a href="{% url 'users:login' %}">登录</a>
-					<span>|</span>
-					<a href="{% url 'users:register' %}">注册</a>
-				</div>
-				{% endif %}
-				<div class="user_link fl">
-					<span>|</span>
-					<a href="{% url 'users:user_info' %}">用户中心</a>
-					<span>|</span>
-					<a href="cart.html">我的购物车</a>
-					<span>|</span>
-					<a href="{% url 'users:user_order' %}">我的订单</a>
-				</div>
-			</div>
-		</div>		
-	</div>
+	{% include 'header-con.html' %}
 
-	<div class="search_bar clearfix">
-		<a href="index.html" class="logo fl"><img src="{% static 'images/logo.png' %}"></a>
-		<div class="search_con fl">
-			<input type="text" class="input_text fl" name="" placeholder="搜索商品">
-			<input type="button" class="input_btn fr" name="" value="搜索">
-		</div>
-		<div class="guest_cart fr">
-			<a href="#" class="cart_name fl">我的购物车</a>
-			<div class="goods_count fl" id="show_count">{{ cart_len | default:0 }}</div>
-		</div>
-	</div>
+	{% include 'search-bar.html' %}
 
 	<div class="navbar_con">
 		<div class="navbar">
@@ -93,7 +56,7 @@
 			<div class="subtitle fl">
 				<span>|</span>
 				{% for title in type.title_banners %}
-				<a href="#">{{ title.good.name }}</a>
+				<a href="{% url 'goods:detail' good_id=title.good.id %}">{{ title.good.name }}</a>
 				{% endfor %}
 			</div>
 			<a href="#" class="goods_more fr" id="{{ type.logo }}_more">查看更多 ></a>
@@ -104,8 +67,8 @@
 			<ul class="goods_list fl">
 				{% for image_banners in type.image_banners %}
 				<li>
-					<h4><a href="#">{{ image_banners.good.name }}</a></h4>
-					<a href="#"><img src="{{ image_banners.good.image.url }}"></a>
+					<h4><a href="{% url 'goods:detail' good_id=image_banners.good.id %}">{{ image_banners.good.name }}</a></h4>
+					<a href="{% url 'goods:detail' good_id=image_banners.good.id %}"><img src="{{ image_banners.good.image.url }}"></a>
 					<div class="prize">¥ {{ image_banners.good.price }}</div>
 				</li>
 				{% endfor %}

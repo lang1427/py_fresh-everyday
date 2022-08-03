@@ -1,7 +1,9 @@
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.core.cache import cache
+from django.urls import reverse
 from django.views import View
-from goods.models import GoodsType, IndexCreatoryGoods,IndexGoodsBanner, IndexPromotion
+from django.db.models import Q
+from goods.models import Goods, GoodsSKU, GoodsType, IndexCreatoryGoods,IndexGoodsBanner, IndexPromotion
 from django_redis import get_redis_connection
 # Create your views here.
 
@@ -42,3 +44,30 @@ class IndexGoodView(View):
         index_cache.update(cart_len=cart_len) # 向 index_cache字典中添加或更新cart_len字段
 
         return render(request,'index.html',index_cache)
+
+
+class GoodDetailView(View):
+
+    def get(self,request,good_id):
+        try:
+            # 获取当前商品的信息
+            goods = GoodsSKU.objects.get(id=good_id)
+        except GoodsSKU.DoesNotExist:
+            return redirect(reverse('goods:index')) 
+
+        # 获取所有商品种类信息
+        types = GoodsType.objects.all()
+        # 获取当前分类商品新品推荐  两条数据
+        new_products = GoodsSKU.objects.filter(Q(type=goods.type)&~Q(id=goods.id)).order_by('-create_time')[:2]
+        # 获取当前商品的其他规格商品信息
+        good_spu = GoodsSKU.objects.filter(goods=goods.goods).exclude(id=goods.id)
+
+        data = {'goods':goods,'types':types,'new_products':new_products,"good_spu":good_spu}
+
+        if request.user.is_authenticated:
+            redis_conn = get_redis_connection('default')
+            user_id = request.user.id
+            cart_len = redis_conn.hlen('cart_%d' % user_id)
+            data.update(cart_len=cart_len)
+
+        return render(request,'detail.html',data)
