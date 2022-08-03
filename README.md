@@ -153,6 +153,16 @@
 
 ### redis 实现购物车功能
 
+1. 什么时候添加购物车记录?
+    - 当用户点击加入购物车时需要添加购物车记录
+2. 什么时候需要获取购物车记录
+    - 使用到购物车中数据和购物车页面的时候需要获取购物车记录
+3. 分析存储购物车记录的格式？
+    - 一个用户的购物车记录用一条数据保存
+    - `hash` card_用户id ：{ sku_id1:商品数目,sku_id2:商品数目 }
+    - `"cart_1":{"1":3,"2":5}` => id为1的用户添加的购物车记录：商品id为1添加了3条，商品id为2添加了5条
+    - 获取用户购物车中商品的条目数：`HLEN`
+
 
 ### 订单信息表
 
@@ -306,6 +316,7 @@
     con = get_redis_connection("default") # 这里的default就是settings.py配置文件中配置的default
     con.lrange() # 左侧插入列表数据
     ```
+    - [redis-py文档](https://redis-py.readthedocs.io/en/stable/commands.html)
 
 - 登录装饰器  [login_required](https://docs.djangoproject.com/zh-hans/4.0/topics/auth/default/#the-login-required-decorator)
 
