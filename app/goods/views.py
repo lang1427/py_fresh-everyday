@@ -70,4 +70,8 @@ class GoodDetailView(View):
             cart_len = redis_conn.hlen('cart_%d' % user_id)
             data.update(cart_len=cart_len)
 
+            # 添加历史浏览记录
+            redis_conn.lrem('history_%d' % user_id,0,good_id) # 先移除掉之前存在的当前商品浏览记录，有则移除，无则不处理
+            redis_conn.lpush('history_%d' % user_id,good_id) # 往左侧插入当前商品id记录
+
         return render(request,'detail.html',data)

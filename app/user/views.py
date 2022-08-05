@@ -4,10 +4,12 @@ from django.urls import reverse
 from django.views import View
 from django.contrib.auth import authenticate,login,logout
 from user.models import Address, User
+from goods.models import GoodsSKU
 from itsdangerous import URLSafeSerializer
 from django.conf import settings
 from celery_tasks.tasks import send_email_task
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django_redis import get_redis_connection
 import re
 
 # Create your views here.
@@ -100,6 +102,11 @@ class UserInfoView(LoginRequiredMixin,View):
         data = {
             "cur_page":"info"
         }
+        redis_conn = get_redis_connection("default")
+        user_id = request.user.id
+        history_list = redis_conn.lrange('history_%d' % user_id,0,4) # 获取前5个历史浏览记录
+        history_data = GoodsSKU.objects.filter(id__in=history_list)
+        data.update(history_data=history_data)
         return render(request,'user_center_info.html',data)
 
 class UserOrderView(LoginRequiredMixin,View):
