@@ -9,34 +9,7 @@
 
 	{% include 'search-bar.html' %}
 
-	<div class="navbar_con">
-		<div class="navbar clearfix">
-			<div class="subnav_con fl">
-				<h1>全部商品分类</h1>	
-				<span></span>			
-				<ul class="subnav">
-					{% for type in types %}
-					<li><a href="#" class="{{ type.logo }}">{{ type.name }}</a></li>
-					{% endfor %}
-				</ul>
-			</div>
-			<ul class="navlist fl">
-				<li><a href="{% url 'goods:index' %}">首页</a></li>
-				<li class="interval">|</li>
-				<li><a href="">手机生鲜</a></li>
-				<li class="interval">|</li>
-				<li><a href="">抽奖</a></li>
-			</ul>
-		</div>
-	</div>
-
-	<div class="breadcrumb">
-		<a href="#">全部分类</a>
-		<span>></span>
-		<a href="#">{{ goods.type.name }}</a>
-		<span>></span>
-		<a href="#">商品详情</a>
-	</div>
+	{% include 'navbar-con.html' %}
 
 	<div class="goods_detail_con clearfix">
 		<div class="goods_detail_pic fl"><img src="{{ goods.image.url }}"></div>
