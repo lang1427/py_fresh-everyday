@@ -1,0 +1,4 @@
+# 指定索引的属性   object:相当于该文件名称命名时的模型类：GoodsSKU
+{{ object.name }}  # 商品名称
+{{ object.desc }}  # 商品描述
+{{ object.goods.detail }}  # 商品详情

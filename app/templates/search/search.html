@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}天天生鲜-搜索列表{% endblock title %}
+
+{% block content %}
+	
+	{% include 'header-con.html' %}
+
+	{% include 'search-bar.html' %}
+
+	<div class="main_wrap clearfix">
+		<div class="l_wrap fl clearfix">
+			
+		</div>
+
+		<div class="r_wrap fr clearfix">
+
+			<ul class="goods_type_list clearfix">
+				{% for good in page %}
+				<li>
+					<a href="{% url 'goods:detail' good.object.id %}"><img src="{{ good.object.image.url }}"></a>
+					<h4><a href="{% url 'goods:detail' good.object.id %}">{{ good.object.name }}</a></h4>
+					<div class="operate">
+						<span class="prize">￥{{ good.object.price }}</span>
+						<span class="unit">{{ good.object.price }}/{{ good.object.unite }}</span>
+						<a href="#" class="add_goods" title="加入购物车"></a>
+					</div>
+				</li>
+				{% empty %} 没有找到相关商品
+				{% endfor %}
+			</ul>
+
+			<div class="pagenation">
+				{% if page.has_previous %}
+					<a href="/search?q={{ query }}&page={{ page.previous_page_number }}"><上一页</a>
+				{% endif %}
+				{% for pindex in paginator.page_range %}
+					{% if page == pindex.number %}
+					<a href="/search?q={{ query }}&page={{ pindex }}" class="active">{{ pindex }}</a>
+					{% else %}
+					<a href="/search?q={{ query }}&page={{ pindex }}">{{ pindex }}</a>
+					{% endif %}
+				{% endfor %}
+				{% if page.has_next %}
+					<a href="/search?q={{ query }}&page={{ page.next_page_number }}">下一页></a>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+
+{% endblock content %}

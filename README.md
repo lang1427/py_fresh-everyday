@@ -410,6 +410,123 @@ cache.delete('my_key')
 
 6. 静态模板使用时 需要 类模型属性.url `<img src="{{ banner.image.url }}">`   轮播图图片
 
+### 搜索功能-全文检索
+
+- 常规搜索而言：比方说要搜索草莓 `select * from goods where name like %草莓% or desc like %草莓% or ...`
+- 搜索引擎：可以对表中的某些字段进行关键词分析，建立关键词对应得索引数据
+- 全文检索框架：可以帮助用户使用搜索引擎
+
+#### 全文检索
+- haystack：全文检索框架，支持whoosh，solr，Xaplan，Elasticsearc四种全文检索引擎
+- whoosh：纯python编写的全文搜索引擎，虽然性能比不上sphinx，xaplan，Elasticsearc等，但是无二进制包，程序不会莫名其妙的崩溃，对于小型的站点，whoosh已经足够使用
+- jieba:一款免费的中文分词包，如果觉得不好用可以使用一些收费产品
+
+1. 安装
+`pip install django-haystack`    3.2.1
+`pip install whoosh`        2.7.4
+2. 修改配置文件 settings.py
+```python
+INSTALL_APPS = [
+    ...
+    haystack # 注册全文检索框架
+]
+# 全文检索框架的配置
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        # 使用whoosh引擎
+        # 'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
+        'ENGINE': 'haystack.backends.whoosh_cn_backend.WhooshEngine',
+        # 索引文件路径
+        'PATH': os.path.join(BASE_DIR, 'whoosh_index'),
+    }
+}
+
+# 当添加、修改、删除数据时，自动生成索引
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+
+```
+3. 生成索引文件
+    1. 在goods应用目录下新建一个`search_indexes.py`(固定的文件名)，在其中定义一个商品索引类
+    ```python
+    class GoodsSKUIndex(indexes.SearchIndex,indexes.Indexable):
+        text = indexes.CharField(document=True,use_template=True)
+
+        def get_model(self):
+            return GoodsSKU
+        def index_queryset(self,using=None):
+            return self.get_model.objects.all()
+    ```
+    2. 在template目录下新建目录`search/indexes/goods`(goods:对应的应用名称)，在此目录下面新建一个文件`goodssku_text.txt`(模型类类名小写_text.txt)，并编辑内容如下
+    ```txt
+    # 指定索引的属性
+    {{ object.name }}  # object:相当于该文件名称命名时的模型类：GoodsSKU
+    {{ object.desc }}
+    {{ object.goods.detail }}
+    ```
+    3. 使用命令生成索引文件
+    fresh-everyday目录下执行
+    `python ./app/manage.py rebuild_index`
+4. 使用全文检索
+    - 表单method固定为get，查询参数固定为q
+    ```html
+    <form method='get' action='/search'>
+        <input type="text" name="q">
+        <input type="submit" value="查询"/>
+    </form>
+    ```
+    - url配置 `include(haystack.urls)`
+    - 搜索出来结果后，haystack会把搜索出的结果传递给`templates/search/search.html`文件中，传递的上下文包括：
+        - query ：搜索关键字
+        - page ：当前页的page对象 ---> 遍历page对象，获取到的是SearchResult类的实例对象，对象的属性object才是模型类的对象
+        - paginator ：分页paginator对象
+    - 通过 `HAYSTACK_SEARCH_RESULTS_PER_PAGE` 可以控制每页显示的数量
+5. 搜索_更改分词方式
+    1. 安装jieba分词模块  `pip install jieba`  0.42.1
+    2. 找到安装目录下的haystack目录 `pip show django-haystack` 
+    **C:\Users\kl\AppData\Local\Programs\Python\Python39\Lib\site-packages\haystack\backends**
+    3. 在该目录下创建`ChineseAnalyzer.py`文件,文件内容如下：
+        ```python
+        import jieba 
+        from whoosh.analysis import Tokenizer, Token
+
+        class ChineseTokenizer(Tokenizer):
+            def __call__(self, value, positions=False, chars=False,
+                        keeporiginal=False, removestops=True,
+                        start_pos=0, start_char=0, mode='', **kwargs):
+                t = Token(positions, chars, removestops=removestops, mode=mode, **kwargs)
+                seglist = jieba.cut(value, cut_all=True)
+                for w in seglist:
+                    t.original = t.text = w
+                    t.boost = 1.0
+                    if positions:
+                        t.pos = start_pos + value.find(w)
+                    if chars:
+                        t.startchar = start_char + value.find(w)
+                        t.endchar = start_char + value.find(w) + len(w)
+                    yield t
+
+        def ChineseAnalyzer():
+            return ChineseTokenizer()
+        ```
+    4. 复制 `whoosh_backend.py` 文件，改为 `whoosh_cn_backend.py`
+    5. 打开复制出来的新文件，引入中文分析类，内部采用jieba分词 `from .ChineseAnalyzer import ChineseAnalyzer`
+    6. 更改词语分析类
+        > 查找 analyzer=field_class.analyzer or StemmingAnalyzer() 改为 analyzer=field_class.analyzer or ChineseAnalyzer()
+    7. 修改settings.py文件中的配置项
+        ```python
+        HAYSTACK_CONNECTIONS = {
+            'default': {
+                # 使用whoosh引擎
+                'ENGINE': 'haystack.backends.whoosh_cn_backend.WhooshEngine', # 使用whoosh_cn_backend.py文件
+                # 索引文件路径
+                'PATH': os.path.join(BASE_DIR, 'whoosh_index'),
+            }
+        }
+        ```
+    8. 重新创建索引数据 `python ./app/manage.py rebuild_index`
+
+
+ 
 ## 项目起步
 
 ### 前提
