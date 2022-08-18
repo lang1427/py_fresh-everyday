@@ -8,7 +8,7 @@
         </form>
     </div>
     <div class="guest_cart fr">
-        <a href="#" class="cart_name fl">我的购物车</a>
+        <a href="{% url 'cart:index' %}" class="cart_name fl">我的购物车</a>
         <div class="goods_count fl" id="show_count">{{ cart_len | default:0 }}</div>
     </div>
 </div>
