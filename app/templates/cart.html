@@ -18,30 +18,34 @@
 		<li class="col05">小计</li>
 		<li class="col06">操作</li>
 	</ul>
-	{% for good in goods %}
-	<ul class="cart_list_td clearfix">
-		<li class="col01"><input type="checkbox" name="" checked></li>
-		<li class="col02"><img src="{{ good.image.url }}"></li>
-		<li class="col03">{{ good.name }}<br><em>{{ good.price }}元/{{ good.unite }}</em></li>
-		<li class="col04">{{ good.unite }}</li>
-		<li class="col05">{{ good.price }}元</li>
-		<li class="col06">
-			<div class="num_add">
-				<a href="javascript:;" class="add fl">+</a>
-				<input type="text" good_id="{{ good.id }}" class="num_show fl" value="{{ good.count }}">	
-				<a href="javascript:;" class="minus fl">-</a>	
-			</div>
-		</li>
-		<li class="col07">{{ good.amount }}元</li>
-		<li class="col08"><a href="javascript:;">删除</a></li>
-	</ul>
-	{% endfor %}
+	<form action="/order/place" method="post" id="order_form">
+		{% for good in goods %}
+		<ul class="cart_list_td clearfix">
+			<li class="col01"><input type="checkbox" name="sku_id" value="{{ good.id }}" checked></li>
+			<li class="col02"><img src="{{ good.image.url }}"></li>
+			<li class="col03">{{ good.name }}<br><em>{{ good.price }}元/{{ good.unite }}</em></li>
+			<li class="col04">{{ good.unite }}</li>
+			<li class="col05">{{ good.price }}元</li>
+			<li class="col06">
+				<div class="num_add">
+					<a href="javascript:;" class="add fl">+</a>
+					<input type="text" good_id="{{ good.id }}" class="num_show fl" value="{{ good.count }}">	
+					<a href="javascript:;" class="minus fl">-</a>	
+				</div>
+			</li>
+			<li class="col07">{{ good.amount }}元</li>
+			<li class="col08"><a href="javascript:;">删除</a></li>
+		</ul>
+		{% endfor %}
+		{% csrf_token %}
+	</form>
+
 
 	<ul class="settlements">
 		<li class="col01"><input type="checkbox" name="" checked=""></li>
 		<li class="col02">全选</li>
 		<li class="col03">合计(不含运费)：<span>¥</span><em>{{ total_price }}</em><br>共计<b>{{ total_count }}</b>件商品</li>
-		<li class="col04"><a href="place_order.html">去结算</a></li>
+		<li class="col04"><a href="javascript:;" onclick="$('#order_form').submit()">去结算</a></li>
 	</ul>
 
 	{% csrf_token %}

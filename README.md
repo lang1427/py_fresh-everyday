@@ -324,6 +324,13 @@
 
 - **除了给模板文件传递的模板变量之外，django框架会把request.user也传给模板文件，在模板文件中可通过user即可等同于视图类中的request.user**
 
+- checkbox复选框只要被选中时，name和value才会被form表单submit
+
+- django中使用事务 ![django 事务](https://docs.djangoproject.com/zh-hans/4.0/topics/db/transactions/)
+    - `from django.db import transaction`
+    - `@transaction.atomic` 装饰器控制使用事务
+    - `savepoint` 保存点
+
 ```python
 from tinymce.models import HTMLField
 class GoodsTest(models.Model):
@@ -351,6 +358,39 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 ```
+
+### 并发问题（悲观锁，乐观锁） 
+一个商品库存只有一件，同时有多个人下单购买该商品，可能就会存在商品已被某一个人购买，但是库存数量仍然在其他人下单时还存在，这就是并发的问题
+- 通过悲观锁解决：首次查询该商品数据时就加锁，直到事务结束，锁被释放，购买成功或失败，否则其他人下单都会在等待中
+- 通过乐观锁解决：所有人同时购买该商品，下单更改库存时判断该库存是否与查询出的原库存相同，如果相同，则认定为购买成功，否则库存发生了变化，需要对其做多次尝试；下单过程中不会被阻塞等待
+- 在冲突比较少的时候使用乐观锁
+
+#### 悲观锁 (查询访问数据时加锁)
+查询数据时就加锁，直到事务结束，锁被释放，否则其他的sql语句都被阻塞
+- SQL ： `select * from f_goods_sku where id=17 for update` (for update 加锁)，事务结束，锁释放
+- Django ： `GoodsSKU.objects.select_for_update().get(id=17)`
+
+#### 乐观锁 (更新数据时判断数据是否一致)
+在查询数据的时候不加锁，在更新数据时进行判断，判断更新时的库存和之前查出来的库存是否一致 
+**假设查询出来的stock库存为1**
+- SQL ： `update f_goods_sku set stock=0,sales=1 where id=17 and stock=1` (设置库存-1，并判断库存是否等于查询出来的库存1)
+- Django
+    ```python
+    sku = GoodsSKU.objects.get(id=17)
+    origin_stock = sku.stock 
+    new_stock = origin_stock - int(count) # 新的库存数量 = 查出来的库存数量 - 要购买的数量
+    new_sales = sku.sales + int(count)  # 新的销量
+    # update() 返回受影响的行数
+    res = GoodsSKU.objects.filter(id=17,stock=origin_stock).update(stock=new_stock,sales=new_sales)
+    if res == 0:
+        """update方法返回0只能证明数据有被更改的痕迹，并不能说明当前商品的库存不足，所以需要多次尝试查询&更新"""
+        transaction.savepoint_rollback(save_id) # 事务回滚
+        return "失败"
+    ```
+    - 需要设置mysql事务的隔离级别 （读取提交内容）
+        - mysql配置文件 新增或修改： `transaction-isolation = READ-COMMITTED`
+        - django2.x过后貌似就将事务隔离级别改成了读取提交内容(READ-COMMITTED)了
+
 
 ### 页面静态化  （首页）
 1. 通过celery异步生成静态文件
