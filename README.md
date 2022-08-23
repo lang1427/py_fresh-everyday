@@ -330,6 +330,7 @@
     - `from django.db import transaction`
     - `@transaction.atomic` 装饰器控制使用事务
     - `savepoint` 保存点
+    - 事务解决：购买商品时，部分商品因库存或其他因素导致订单失败，但是失败前的操作依然有效，成功写入到数据，更改了表数据；要么都购买成功，要么都失败
 
 ```python
 from tinymce.models import HTMLField
