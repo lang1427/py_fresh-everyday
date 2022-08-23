@@ -100,8 +100,6 @@ class OrderCommitView(View):
                         transaction.savepoint_rollback(sid)
                         return JsonResponse({"res":0,"msg":"商品库存不足"})
                     
-                    OrderGoods.objects.create(order_info=order_info,goods_sku=sku,count=count,price=amount,comment='')
-
                     # 更新该商品的库存和销量
                     # sku.stock -= count
                     # sku.sales += count
@@ -116,6 +114,7 @@ class OrderCommitView(View):
                             transaction.savepoint_rollback(sid)
                             return JsonResponse({"res":0,"msg":"下单失败"})
                         continue
+                    OrderGoods.objects.create(order_info=order_info,goods_sku=sku,count=count,price=amount,comment='')
                     break
             
             # 更新订单中商品总数量和总价格
