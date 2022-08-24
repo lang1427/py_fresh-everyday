@@ -9,6 +9,6 @@ urlpatterns = [
     re_path(r'^login$',LoginView.as_view(),name='login'), # /user/login 登录页面
     re_path(r'^logout',LogoutView.as_view(),name='logout'), # /user/logout 登出
     re_path(r'^$', UserInfoView.as_view(),name='user_info'), # /user 用户信息页
-    re_path(r'^order$',UserOrderView.as_view(),name='user_order'), # /user/order 用户订单页
+    re_path(r'^order/(?P<page>\d+)$',UserOrderView.as_view(),name='user_order'), # /user/order/1 用户订单页
     re_path(r'^site$',UserSiteView.as_view(),name='user_site') # /user/site 用户收货地址页
 ]

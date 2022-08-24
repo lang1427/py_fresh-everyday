@@ -89,8 +89,8 @@ class OrderCommitView(View):
                         transaction.savepoint_rollback(sid)
                         return JsonResponse({"res":0,"msg":"没有相关商品"})
 
-                    print('user%d:购买商品%s,库存量：%d' % (userid,sku.name,sku.stock))
-                    time.sleep(10)
+                    # print('user%d:购买商品%s,库存量：%d' % (userid,sku.name,sku.stock))
+                    # time.sleep(10)    演示并发的问题
 
                     count = int(redis_conn.hget('cart_%d' % userid,sku_id))
                     amount = sku.price * count

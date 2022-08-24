@@ -3,8 +3,10 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views import View
 from django.contrib.auth import authenticate,login,logout
+from django.core.paginator import Paginator
 from user.models import Address, User
 from goods.models import GoodsSKU
+from order.models import OrderGoods, OrderInfo
 from itsdangerous import URLSafeSerializer
 from django.conf import settings
 from celery_tasks.tasks import send_email_task
@@ -111,9 +113,40 @@ class UserInfoView(LoginRequiredMixin,View):
 
 class UserOrderView(LoginRequiredMixin,View):
 
-    def get(self,request):
+    def get(self,request,page):
+        # 获取用户订单信息
+        user_id = request.user.id
+
+        order_list = OrderInfo.objects.filter(user_id=user_id).order_by('-create_time')
+        for order_item in order_list:
+            order_goods = OrderGoods.objects.filter(order_info=order_item)
+            order_item.order_goods = order_goods
+            order_item.status_name = OrderInfo.ORDER_STATUS[order_item.status]
+
+        order_page = Paginator(order_list,1) # 1条数据为一个页码
+        try:
+            page = int(page)
+        except Exception as e:
+            page = 1
+
+        if page > order_page.num_pages:
+            page = 1
+
+        order_list = order_page.page(page)
+
+        if order_page.num_pages < 5:
+            page_range = range(1,order_page.num_pages+1)
+        elif order_list.number <= 3:
+            page_range = range(1,6)
+        elif order_page.num_pages - order_list.number <= 3:
+            page_range = range(order_page.num_pages-4,order_page.num_pages+1)
+        else:
+            page_range = range(order_list.number-2,order_list.number+3)
+            
         data = {
-            "cur_page":"order"
+            "cur_page":"order",
+            "orders":order_list,
+            "page_range":page_range
         }
         return render(request,'user_center_order.html',data)
 
