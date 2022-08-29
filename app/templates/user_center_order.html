@@ -3,7 +3,7 @@
 
 {% block user_content %}
 <h3 class="common_title2">全部订单</h3>
-
+{% csrf_token %}
 {% for order in orders %}
 <ul class="order_list_th w978 clearfix">
 	<li class="col01">{{ order.create_time }}</li>
@@ -27,7 +27,7 @@
 			</td>
 			<td width="15%">{{ order.total_price }}元</td>
 			<td width="15%">{{ order.status_name }}</td>
-			<td width="15%"><a href="#" class="oper_btn">去付款</a></td>
+			<td width="15%"><a href="javascript:;" trade_no="{{ order.order_id }}" class="oper_btn">去付款</a></td>
 		</tr>
 	</tbody>
 </table>
@@ -48,7 +48,33 @@
 		<a href="{% url 'users:user_order' orders.next_page_number %}">下一页></a>
 	{% endif %}
 </div>
+
+<script src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
+<script>
+	$(function(){
+		$('.oper_btn').on('click',function(){
+			if($(this).parent().prev().text()=="待支付"){
+				var trade_no = $(this).attr('trade_no')
+				$.ajax({
+					url:"/order/pay",
+					method:"post",
+					data:{
+						trade_no:trade_no,
+						csrfmiddlewaretoken:$("input[name='csrfmiddlewaretoken']").val()
+					},
+					success:function(data){
+						if(data.res){
+							window.open(data.msg)
+						}else{
+							alert(data.msg)
+						}
+					}
+				})
+			}else{
+				alert("该订单已支付过")
+			}
+		})
+	})
+</script>
+
 {% endblock user_content %}
-
-
-

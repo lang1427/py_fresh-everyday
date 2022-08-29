@@ -130,3 +130,62 @@ class OrderCommitView(View):
         # 清除购物车中已购买的商品数量
         redis_conn.hdel('cart_%d' % userid,*sku_ids)
         return JsonResponse({"res":1,"msg":"提交订单成功"})
+
+from alipay.aop.api.AlipayClientConfig import AlipayClientConfig
+from alipay.aop.api.DefaultAlipayClient import DefaultAlipayClient
+from alipay.aop.api.domain.AlipayTradePayModel import AlipayTradePayModel
+from alipay.aop.api.request.AlipayTradePagePayRequest import AlipayTradePagePayRequest
+class AliPay():
+    Client = None
+    def __init__(cls):
+        """
+        设置配置，包括支付宝网关地址、app_id、应用私钥、支付宝公钥等，其他配置值可以查看AlipayClientConfig的定义。
+        """
+        cls.alipay_client_config = AlipayClientConfig()
+        cls.alipay_client_config.server_url = 'https://openapi.alipaydev.com/gateway.do'  # 沙箱： https://openapi.alipaydev.com/gateway.do   真实地址：https://openapi.alipay.com/gateway.do
+        cls.alipay_client_config.app_id = '2021000121651834'
+        cls.alipay_client_config.app_private_key = 'MIIEpQIBAAKCAQEAxptLJEdAOgMKtXRC4YVIaRXKdAd4bw7PzpD4qNlHsVpLQsAOnmQCpfTb6Ss5lW2ehk5VXZIP1FXRv4xoDZz/DkiLtBF81aePvUT6qUJxoMj9BHlpH9Ci4detIUuC78FprxBzSstcR5dzE6NemDozytewCJgp6/53YftWo59ajJolBbQruC65zhPcMVRwIwrR0VM+FmDConbEgXHR8m7SSLBTGporDRW3YgWA4G1BnsmzxkDWhkvdWIQIourxAzoiMuFra4uIsJqbtpEsxEMWYdI/JelAnqOJe7eDBkmDYF+jth0pM61AqCv/6EQFguDA1ujIvxmdfsxFgSJMp40erwIDAQABAoIBAAIb9BhWiWAUWDDFI1Cx0asMCDJjQewsBBj1gS6J4DEJ/HKhB4a3GTAaAZvgUaQ8ncpfWpi7zF886hVWsGQ0nqDQNGudI+5A8U3ZRbA2fG5ws/8wKuWjmZc8ayJHYwSY0T6Ctja9IiXAfgBfY8nKFHK7B6uPsiJHeY0Y1jq2noePtrcQ+lH9TSK7wncYb1uQZL2pkvxRLuVBm2kSlI9vcH0H7IsC6VTfxlkFmLa8YPKEp9U+PkrEXciz9R2egAY98W+le/ffpevYG8ZQroUnB/HFv8VTPfqb6cfrBe0TQONaeJp0TqXy+7crEougL+lHV+DPGelm7wNsuINXDCJ5MYECgYEA8/RoTkTDgRd0hHoAtSDUF6OF7U2OJVAvIbh84JE3TiVIW3MLHFnQvK69vh7fCSxX2LNkIwGBXOsHO+RuEP/rcVEfdvCf4eYq123CtJpsn7b8TfimIu99WdA9OK6pFFL67d0WkTJ6a6Ji0bMsTqnI7StE5ZJnv0gWYybG20TdbbkCgYEA0GmvZqiGBq13LXh3nBzJvdYlWmM+TnJ2eJqdiaZdzA6oH8UvTJJ+pRLu2LPpji+l9NupYMGbN/FCwGThyavHc/mx6a6OTTr6NK4n6MaxR0qUo4pQnQDYENXZPok3QHv5Uu7CgpO5k37gFyVf+fyteGVlF/R5zqI16Dc1Yh0MY6cCgYEAkvTdTKDhwMcXWqKAAJypByBrkhsREOsvqTmQiFsSHNIat3Qi8k4sjy0Yggnow4bh2FmgbfH/MrEmJ28g2r6/3wBGWwjy10sm7aViEBeibcf2TyYFNrBcK5lk99tHYUXngRiY+piU5Hfq3XX4r95Zen2BQGYkdzb+vXXjfr0KQokCgYEAgbZVUapviDZsZ2OD5ijQsxNWOjRscfyxmYx5olNmK3uvzd42+wxuQCVRfJQ1N6aWPph8idjV13KUHhRrps4AHEF7JrranFypnyIJeso3Sey0KDkMxTriP1Apns9eEQdX/PLXItf4d0FPDXjYjElkWfuZeNhS+3Vf4cCCvCbiMB8CgYEAjNn9WryRuoGT907aQt6t8p9r9r6DPP0M3WXk40nayiyIW/ES3CjV/j0NeLC+WVT3F/VWb0MK76GPVp5GNEE6dcBERyzaDtX0a9DtchyvXuxrCOrf10BQXmMTWpnjqPfTIEuCekW/BiUmhM9ETKGD2JdgriQsUJ8kgoX+pN5+cHg='
+        cls.alipay_client_config.alipay_public_key = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApJsFdXGdDR8GOoRKhT8h3Tak4tS7To6sbbh2FxJ332qQTVR7aUJeSchSShhIgT3sGICwkClfcOOJ5LxNDN7Wt4LD6WP4j08uagbc9nsFGP0GXMGnrWM2/ZF2RElIAPuGqAErPxhQv//6pznV4qtmZ4ig7+Pr3GyZ5WTrXeZAKH/PJIwtixIG0bJF7Nf44O2PubmyJhwxb+xxJm+2Wf8HV7yk0uAUvLw9nm5AKW+Jg+kTWKQ93cUSb5a/0pwvkAcnqFy8WEcb+6jelxaotrOcE+S3FKWLDP3JG/W9si2nodH55yN+ZGWDhzrixcLrKy0h2FpZ+9X5Dq88gz5F9ILtbQIDAQAB'
+        """
+        得到客户端对象。
+        注意，一个alipay_client_config对象对应一个DefaultAlipayClient，定义DefaultAlipayClient对象后，alipay_client_config不得修改，如果想使用不同的配置，请定义不同的DefaultAlipayClient。
+        logger参数用于打印日志，不传则不打印，建议传递。
+        """
+        AliPay.Client = DefaultAlipayClient(alipay_client_config=cls.alipay_client_config,logger=None)
+
+    
+    """alipay.trade.page.pay(统一收单下单并支付页面接口)"""
+    @classmethod
+    def pay(cls,trade_no,total_amount,subject,body=None) -> str:
+        model = AlipayTradePayModel()
+        model.out_trade_no = trade_no # 订单编号
+        model.total_amount = total_amount # 订单总金额
+        model.subject = subject # 订单标题
+        model.product_code = "FAST_INSTANT_TRADE_PAY" 
+        model.body = body # 订单附加信息
+        request = AlipayTradePagePayRequest(biz_model=model)
+        # 得到构造的请求，如果http_method是GET，则是一个带完成请求参数的url，如果http_method是POST，则是一段HTML表单片段
+        response = AliPay.Client.page_execute(request,http_method="GET")
+        print("alipay.trade.page.pay response:" + response)
+        return response
+
+
+
+class OrderPayView(View):
+    """调用支付宝支付接口：验证前端传递商品订单号即可"""
+    def post(self,request):
+        
+        if not request.user.is_authenticated:
+            return JsonResponse({"res":0,"msg":"登录超时"})
+        trade_no = request.POST.get('trade_no')
+        if not trade_no:
+            return JsonResponse({"res":0,"msg":"参数错误"})
+        try:
+            order_info = OrderInfo.objects.get(order_id=trade_no,user=request.user,pay_methods=3,status=1)
+        except OrderInfo.DoesNotExist:
+            return JsonResponse({"res":0,"msg":"没有该订单信息"})
+        alipay = AliPay()
+        res = alipay.pay(trade_no,str(order_info.total_price),order_info.user.username+'订单') # 商品总价类型 Decimal: Object of type Decimal is not JSON serializable
+        return JsonResponse({"res":1,"msg":res})
+        
+

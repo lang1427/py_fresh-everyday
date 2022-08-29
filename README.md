@@ -578,6 +578,12 @@ HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
 5. 安装celery 异步任务 `pip install -U Celery`  5.2.7
 6. 安装redis `pip install reids` 4.3.4
 7. 安装django-redis `pip install django-redis` 5.2.0
+8. 安装alipay-sdk-python `pip install alipay-sdk-python` 3.6.332
+    - 访问蚂蚁金服开放平台的官方SDK
+    1. 设置应用公钥 ：通过openssl可生成密钥文件(公钥/私钥)，将生成的公钥放在支付宝开放平台自定义密钥中
+    2. 获取支付宝开放平台公钥：一样在支付宝开放平台自定义密钥中可看到
+    3. 将支付宝开放平台公钥内容复制到项目文件`alipay_public_key.pem`中
+    4. 同时将生成的应用私钥文件也放在项目文件`app_private_key.pem`中
 
 
 
@@ -613,3 +619,5 @@ HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
 
 1. 写入文件数据时出现： `UnicodeEncodeError: 'gbk' codec can't encode character '\xa5' in position 4107: illegal multibyte sequence`
     - 解决方式：`celery_tasks/tasks.py`文件中写入文件数据 open方法添加参数`encoding='utf-8'`
+2. 调用支付宝支付时 `alipay.pay(trade_no,order_info.total_price,order_info.user.username+'订单')` 出现 `Object of type Decimal is not JSON serializable`
+    - 因为商品的总价*order_info.total_price*的类型是**Decimal**，不能被序列化。需转成str类型即可`alipay.pay(trade_no,str(order_info.total_price),order_info.user.username+'订单')`
