@@ -11,6 +11,7 @@ from user.models import Address
 from order.models import OrderGoods, OrderInfo
 
 import time
+import json
 # Create your views here.
 
 class OrderPlaceView(LoginRequiredMixin,View):
@@ -135,6 +136,8 @@ from alipay.aop.api.AlipayClientConfig import AlipayClientConfig
 from alipay.aop.api.DefaultAlipayClient import DefaultAlipayClient
 from alipay.aop.api.domain.AlipayTradePayModel import AlipayTradePayModel
 from alipay.aop.api.request.AlipayTradePagePayRequest import AlipayTradePagePayRequest
+from alipay.aop.api.domain.AlipayTradeQueryModel import AlipayTradeQueryModel
+from alipay.aop.api.request.AlipayTradeQueryRequest import AlipayTradeQueryRequest
 class AliPay():
     Client = None
     def __init__(cls):
@@ -152,13 +155,12 @@ class AliPay():
         logger参数用于打印日志，不传则不打印，建议传递。
         """
         AliPay.Client = DefaultAlipayClient(alipay_client_config=cls.alipay_client_config,logger=None)
-
-    
+  
     """alipay.trade.page.pay(统一收单下单并支付页面接口)"""
     @classmethod
     def pay(cls,trade_no,total_amount,subject,body=None) -> str:
         model = AlipayTradePayModel()
-        model.out_trade_no = trade_no # 订单编号
+        model.out_trade_no = trade_no # 订单编号 order_id
         model.total_amount = total_amount # 订单总金额
         model.subject = subject # 订单标题
         model.product_code = "FAST_INSTANT_TRADE_PAY" 
@@ -169,6 +171,15 @@ class AliPay():
         print("alipay.trade.page.pay response:" + response)
         return response
 
+    """alipay.trade.query(统一收单线下交易查询接口)"""
+    @classmethod
+    def query(cls,trade_no):
+        model = AlipayTradeQueryModel()
+        model.out_trade_no = trade_no # 订单号 order_id
+        request = AlipayTradeQueryRequest(biz_model=model)
+        response = AliPay.Client.execute(request)
+        print("alipay.trade.query response:" + response)
+        return json.loads(response)  # 这里返回结果是字符串类型，需要转换成json
 
 
 class OrderPayView(View):
@@ -188,4 +199,35 @@ class OrderPayView(View):
         res = alipay.pay(trade_no,str(order_info.total_price),order_info.user.username+'订单') # 商品总价类型 Decimal: Object of type Decimal is not JSON serializable
         return JsonResponse({"res":1,"msg":res})
         
-
+class OrderQueryView(View):
+    """调用支付宝查询接口：验证前端传递商品订单号即可"""
+    def post(self,request):
+        if not request.user.is_authenticated:
+            return JsonResponse({"res":0,"msg":"登录超时"})
+        trade_no = request.POST.get('trade_no')
+        if not trade_no:
+            return JsonResponse({"res":0,"msg":"参数错误"})
+        try:
+            order_info = OrderInfo.objects.get(order_id=trade_no,user=request.user,pay_methods=3,status=1)
+        except OrderInfo.DoesNotExist:
+            return JsonResponse({"res":0,"msg":"没有该订单信息"})
+        while True:
+            alipay = AliPay()
+            res = alipay.query(trade_no)
+            code = res.get('code')
+            if code == "10000" and res.get('trade_status') == 'TRADE_SUCCESS':
+                # 支付成功
+                ali_trade_no = res.get('trade_no') # 获取支付宝交易号
+                # 更新订单状态
+                order_info.trade_no = ali_trade_no
+                order_info.status = 4 # 待评价
+                order_info.save()
+                return JsonResponse({"res":1,"msg":"支付成功"})
+            elif code == "40004" or (code == "10000" and res.get('trade_status') == 'WAIT_BUYER_PAY'):
+                # 业务处理失败，可能一会儿就会成功 或者 等待买家付款状态
+                time.sleep(5)
+                continue
+            else:
+                # 支付出错
+                print(res)
+                return JsonResponse({"res":0,"msg":"支付失败"})

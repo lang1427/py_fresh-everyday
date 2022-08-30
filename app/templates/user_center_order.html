@@ -65,6 +65,22 @@
 					success:function(data){
 						if(data.res){
 							window.open(data.msg)
+							$.ajax({
+								url:"/order/query",
+								method:"post",
+								data:{
+									trade_no:trade_no,
+									csrfmiddlewaretoken:$("input[name='csrfmiddlewaretoken']").val()
+								},
+								success:function(data){
+									if(data.res){
+										alert('支付成功')
+										window.location.reload()
+									}else{
+										alert('支付失败')
+									}
+								}
+							})
 						}else{
 							alert(data.msg)
 						}
