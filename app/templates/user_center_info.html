@@ -17,7 +17,7 @@
 		{% for good in history_data %}
 		<li>
 			<a href="{% url 'goods:detail' good.id %}"><img src="{{ good.image.url }}"></a>
-			<h4><a href="{% url 'goods:detail' good.id %}">大兴大棚草莓</a></h4>
+			<h4><a href="{% url 'goods:detail' good.id %}">{{ good.name }}</a></h4>
 			<div class="operate">
 				<span class="prize">￥{{ good.price }}</span>
 				<span class="unit">{{ good.price }}/{{ good.unite }}</span>

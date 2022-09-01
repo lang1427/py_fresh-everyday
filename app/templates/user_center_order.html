@@ -27,7 +27,7 @@
 			</td>
 			<td width="15%">{{ order.total_price }}元</td>
 			<td width="15%">{{ order.status_name }}</td>
-			<td width="15%"><a href="javascript:;" trade_no="{{ order.order_id }}" class="oper_btn">去付款</a></td>
+			<td width="15%"><a href="javascript:;" trade_no="{{ order.order_id }}" status="{{ order.status }}" class="oper_btn">去付款</a></td>
 		</tr>
 	</tbody>
 </table>
@@ -52,9 +52,19 @@
 <script src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
 <script>
 	$(function(){
+
+		$('.oper_btn').each(function(){
+			var status = $(this).attr('status')
+			if(status=='4'){
+				$(this).text('去评价')
+			}else if(status=='5'){
+				$(this).text('已完成')
+			}
+		})
+
 		$('.oper_btn').on('click',function(){
-			if($(this).parent().prev().text()=="待支付"){
-				var trade_no = $(this).attr('trade_no')
+			var trade_no = $(this).attr('trade_no')
+			if($(this).attr('status')=="1"){
 				$.ajax({
 					url:"/order/pay",
 					method:"post",
@@ -86,6 +96,8 @@
 						}
 					}
 				})
+			}else if($(this).attr('status') == '4'){
+				window.location.href = '/order/comment/'+trade_no
 			}else{
 				alert("该订单已支付过")
 			}

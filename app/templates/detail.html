@@ -63,14 +63,23 @@
 
 		<div class="r_wrap fr clearfix">
 			<ul class="detail_tab clearfix">
-				<li class="active">商品介绍</li>
-				<li>评论</li>
+				<li id="tag_detail" class="active">商品介绍</li>
+				<li id="tag_comment">评论</li>
 			</ul>
 
-			<div class="tab_content">
+			<div class="tab_content" id="tab_detail">
 				<dl>
 					<dt>商品详情：</dt>
 					<dd>{{ goods.goods.detail | safe }} </dd>
+				</dl>
+			</div>
+
+			<div class="tab_content" id="tab_comment" style="display: none">
+				<dl>
+                    {% for order in order_goods %}
+					<dt>评论时间：{{ order.update_time }}&nbsp;&nbsp;用户名:{{ order.order_info.user.username }}</dt>
+                    <dd>评论内容:{{ order.comment }}</dd>
+                    {% endfor %}
 				</dl>
 			</div>
 
@@ -84,6 +93,18 @@
 
 	<script type="text/javascript" src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
 	<script type="text/javascript">
+
+		$('.detail_tab li').on('click',function(){
+			$(this).addClass('active').siblings().removeClass('active')
+			if($(this).prop('id')=='tag_detail'){
+				$('#tab_detail').show()
+				$('#tab_comment').hide()
+			}else{
+				$('#tab_comment').show()
+				$('#tab_detail').hide()
+			}
+		})
+
 		var $add_x = $('#add_cart').offset().top;
 		var $add_y = $('#add_cart').offset().left;
 

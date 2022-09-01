@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.views import View
 from django.db.models import Q
 from goods.models import Goods, GoodsSKU, GoodsType, IndexCreatoryGoods,IndexGoodsBanner, IndexPromotion
+from order.models import OrderGoods
 from django_redis import get_redis_connection
 from django.core.paginator import Paginator
 # Create your views here.
@@ -63,7 +64,10 @@ class GoodDetailView(View):
         # 获取当前商品的其他规格商品信息
         good_spu = GoodsSKU.objects.filter(goods=goods.goods).exclude(id=goods.id)
 
-        data = {'goods':goods,'types':types,'new_products':new_products,"good_spu":good_spu}
+        # 获取商品评论信息
+        order_goods = OrderGoods.objects.filter(goods_sku=good_id).exclude(comment='')
+
+        data = {'goods':goods,'types':types,'new_products':new_products,"good_spu":good_spu,"order_goods":order_goods}
 
         if request.user.is_authenticated:
             redis_conn = get_redis_connection('default')
