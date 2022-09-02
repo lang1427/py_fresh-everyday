@@ -1,3 +1,17 @@
+## 项目说明
+1. 生鲜类产品 B2C PC电脑端网页
+2. 功能模块：用户模块（注册/登录/激活/退出/个人中心/地址），商品模块（首页/详情/列表/搜索），购物车模块（增加/删除/修改/查询），订单模块（提交订单/请求支付/查询支付结果/评论）
+3. django默认的认证系统**AbstractUser** 
+    - create_user() 默认生成的user数据，is_active=1是已激活的状态，需要手动对is_active设置为0，创建一个未被激活的用户
+4. itsdangerous 生成签名的token （加密）
+5. 邮件 django提供邮件支持 配置参数 send_mail
+6. celecy 异步任务
+7. 页面静态化
+8. 缓存
+9. FastDFS 分布式文件存储服务，修改了django默认的文件存储系统
+10. 搜索（whoosh 索引 分词）
+
+
 ## 需求分析
 
 ### 用户模块
@@ -621,3 +635,56 @@ HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
     - 解决方式：`celery_tasks/tasks.py`文件中写入文件数据 open方法添加参数`encoding='utf-8'`
 2. 调用支付宝支付时 `alipay.pay(trade_no,order_info.total_price,order_info.user.username+'订单')` 出现 `Object of type Decimal is not JSON serializable`
     - 因为商品的总价*order_info.total_price*的类型是**Decimal**，不能被序列化。需转成str类型即可`alipay.pay(trade_no,str(order_info.total_price),order_info.user.username+'订单')`
+
+
+## 项目部署
+
+### uwsgi
+遵循wsgi协议的web服务器
+1. 安装 ： `pip install uwsgi`
+2. uwsgi的配置
+    - 项目部署时，需要设置settings.py文件夹下的`DEBUG=False`,`ALLOWED_HOSTS=['*']`
+    - `uwsgi.ini` 配置文件
+3. uwsgi的启动和停止
+    - 启动：uwsgi --ini 配置文件路径 `uwsgi --ini uwsgi.ini`
+    - 停止：uwsgi --stop uwsgi.pid `uwsgi --stop uwsgi.pid`
+- **uwsgi => python manage.py runserver**  启动django项目
+
+### nginx
+
+**使用nginx，需要将uwsgi.ini配置文件中的http形式变成socket形式**
+
+1. nginx配置转发请求给uwsgi
+    ```conf
+    location / {
+        include uwsgi_params;
+        uwsgi_pass uwsgi服务器的ip:port
+    }
+    ```
+2. nginx配置处理静态文件
+    - 配置收集静态文件
+        - `settings.py`中设置`STATIC_ROOT=收集的静态文件路径` 例如：/var/www/fresh_everyday/static
+        - django收集静态文件的命令：`python manage.py collectstatic`
+        执行该命令，会把项目中所使用的静态文件收集到STATIC_ROOT指定的目录下，然后对nginx进行下列配置
+    ```conf
+    location /static {
+        # 指定静态文件存放的目录
+        alias /var/www/fresh_everyday/static
+    }
+    ```
+3. nginx配置upstream实现负载均衡
+
+    > nginx 配置负载均衡时，在server配置的前面增加upstream配置项
+    ```conf
+    upstream fresh_everyday { # fresh_everyday：上游名称
+        server 127.0.0.1:8080;
+        server 127.0.0.1:8081;
+    }
+    server{
+        location / {
+            include uwsgi_params;
+            uwsgi_pass fresh_everyday # 对应upstream的名称
+        }   
+    }
+    ```
+    - 这样的话，就可以通过uwsgi配置多个uwsgi.ini配置项，启用多个django项目，配置好上面的负载均衡，当用户访问该项目的时候，负载均衡就会从upstream上游配置的访问地址来回切换，以达到访问量大到不能承受
