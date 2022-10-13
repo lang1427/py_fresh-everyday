@@ -86,9 +86,12 @@ class LoginView(View):
 
         user = authenticate(request,username=username,password=password)
         if user is not None:
-            login(request,user)
-            next_url = request.GET.get('next',reverse('users:user_info')) # 获取登录之后要跳转的地址，如果有next就跳转到next，没有就跳转的商品首页
-            return redirect(next_url)
+            if user.is_active:
+                login(request,user)
+                next_url = request.GET.get('next',reverse('users:user_info')) # 获取登录之后要跳转的地址，如果有next就跳转到next，没有就跳转的商品首页
+                return redirect(next_url)
+            else:
+                return render(request,'login.html',{'errmsg':'该用户未激活'})
         else:
             return render(request,'login.html',{'errmsg':'用户名或密码错误'})
 

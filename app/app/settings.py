@@ -98,6 +98,8 @@ DATABASES = {
 # Django认证系统使用的模型类  SystemCheckError: System check identified some issues
 AUTH_USER_MODEL = 'user.User' # python manage.py createsuper
 
+AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.AllowAllUsersModelBackend'] # 自定义验证 认证系统AbstractUser
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
