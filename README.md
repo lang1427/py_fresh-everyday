@@ -11,6 +11,9 @@
 9. FastDFS 分布式文件存储服务，修改了django默认的文件存储系统
 10. 搜索（whoosh 索引 分词）
 
+## 项目部署文档
+ [CentOS7 python django框架 天天生鲜项目 搭建流程 CSDN](https://blog.csdn.net/weixin_42661283/article/details/127305533?spm=1001.2014.3001.5501)
+
 
 ## 需求分析
 
